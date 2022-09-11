@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using ToDoFrontEnd.Services;
@@ -8,10 +9,9 @@ namespace ToDoFrontEnd.Pages
     {
         public void OnGet()
         {
-            Token.AccessToken = String.Empty;
-
-            if (string.IsNullOrEmpty(Token.AccessToken))
-                Response.Redirect("/login");
+            Response.Cookies.Append("Access-Token", "");
+            if (string.IsNullOrEmpty(Request.Cookies["Access-Token"]))
+                Response.Redirect("login",true);
         }
     }
 }
