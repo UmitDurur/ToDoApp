@@ -198,6 +198,23 @@ public class IdentityServerDataSeedContributor : IDataSeedContributor, ITransien
             corsOrigins: new[] { toDoAppRootUrl.RemovePostFix("/") }
             );
         }
+
+        //  Web Client
+        // BookStoreConsole Client
+        var vueAppClientId = configurationSection["ToDoApp_Vue:ClientId"];
+        if (!vueAppClientId.IsNullOrWhiteSpace())
+        {
+            var toDoAppRootUrl = configurationSection["ToDoApp_Vue:RootUrl"].TrimEnd('/');
+            await CreateClientAsync(
+                name: vueAppClientId,
+                scopes: commonScopes,
+                grantTypes: new[] { "password", "client_credentials", "authorization_code" },
+                secret: configurationSection["ToDoApp_Vue:ClientSecret"]?.Sha256(),
+                requireClientSecret: false,
+                redirectUri: $"{toDoAppRootUrl}/authentication/login-callback",
+            corsOrigins: new[] { toDoAppRootUrl.RemovePostFix("/") }
+            );
+        }
     }
 
     private async Task<Client> CreateClientAsync(

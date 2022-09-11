@@ -13,7 +13,7 @@ using Volo.Abp.Users;
 
 namespace ToDoApp.ToDos
 {
-
+    [Authorize]
     public class ToDoService : ToDoAppAppService, IToDoService
     {
         private readonly IRepository<ToDo, Guid> _toDoRepository;
@@ -60,7 +60,7 @@ namespace ToDoApp.ToDos
                 ObjectMapper.Map<List<ToDo>, List<ToDoDto>>(todos)
                 );
         }
-
+        
         public async Task<PagedResultDto<ToDoDto>> GetFilteredListByTitleAsync(PagedAndSortedResultByTitleRequestDto input)
         {
             var queryable = await _toDoRepository.WithDetailsAsync(x => x.Title);
@@ -81,7 +81,7 @@ namespace ToDoApp.ToDos
                 ObjectMapper.Map<List<ToDo>, List<ToDoDto>>(todos)
                 );
         }
-        [Authorize]
+
         public async Task<ListResultDto<ToDoTitleLookupDto>> GetTitlesAsync()
         {
             var titles = await _titleRepository.GetListAsync();
