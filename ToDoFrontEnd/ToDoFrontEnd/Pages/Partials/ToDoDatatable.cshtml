@@ -1,21 +1,91 @@
-﻿@page
-@model ToDoFrontEnd.Pages.Partials.ToDoDatatableModel
+﻿@using ToDoFrontEnd.Services.Dtos
+@model List<ToDoDto>
 @{
 }
+
 <table id="ToDoDataTable" class="table table-striped table-bordered dt-responsive nowrap" width="100%" cellspacing="0">
     <thead>
         <tr>
-            <th>ID</th>
-            <th>First Name</th>
+            <th class="col-8">Description</th>
+            <th class="col-2">State</th>
+            <th class="col-1">Actions</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.ToDos)
+        @foreach (var item in Model)
         {
             <tr>
-                <td>@item.Id</td>
-                <td>@item.Description</td>
+                <td class="align-middle">@item.Description</td>
+                <td class="align-middle"><label class="@item.State">@item.State</label></td>
+                <td class="align-middle">
+
+                    <div class="btn-group justift-content-center" role="group" aria-label="Action Buttons">
+
+                        <form method="post" asp-route-toDoId="@item.Id" asp-page-handler="ToDoEdit">
+                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target=@("#e"+item.Id) )">
+                                <i class="fa fa-solid fa-pen"></i>
+                            </button>
+                            <div class="modal fade" id=@("e"+item.Id) tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">Edit ToDo</h5>
+                                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div>
+                                                <label for="tododescription">Description : </label>
+                                                <input class="form-control" type="text" name="tododescription" id="tododescription" value="@item.Description">
+                                            </div>
+                                            <div>
+                                                <label for="states">Select state : </label>
+                                                <select asp-for="@item.State" id="edittodostate" class="form-control" name="edittodostate">
+                                                    <option value="1">Pending</option>
+                                                    <option value="2">InProgress</option>
+                                                    <option value="3">Done</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            <button class="btn btn-warning" type="submit">Update Record</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <form method="post" asp-route-toDoId="@item.Id" asp-page-handler="ToDoDelete">
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target=@("#m"+item.Id) )">
+                                <i class="fa fa-solid fa-trash"></i>
+                            </button>
+                            <div class="modal fade" id=@("m"+item.Id) tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">Delete ToDo</h5>
+                                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Are you sure you want to delete this record?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            <button class="btn btn-danger" type="submit">Delete Record</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                    </div>
+                </td>
             </tr>
         }
     </tbody>
 </table>
+

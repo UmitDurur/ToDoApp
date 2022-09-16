@@ -15,6 +15,8 @@ public class ToDoAppApplicationAutoMapperProfile : Profile
 
         CreateMap<CreateUpdateToDoDto, ToDo>();
         CreateMap<ToDo,CreateUpdateToDoDto>();
+        CreateMap<CreateUpdateToDoDto, ToDoDto>();
+        CreateMap<ToDoDto, CreateUpdateToDoDto>();
 
         CreateMap<ToDoTitleLookupDto, ToDoTitle>();
         CreateMap<ToDoTitle, ToDoTitleLookupDto>();

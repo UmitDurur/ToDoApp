@@ -7,11 +7,11 @@ namespace ToDoFrontEnd.Pages
 {
     public class LogoutModel : PageModel
     {
-        public void OnGet()
+        public async Task OnGet()
         {
-            Response.Cookies.Append("Access-Token", "");
-            if (string.IsNullOrEmpty(Request.Cookies["Access-Token"]))
-                Response.Redirect("login",true);
+            Response.Cookies.Delete("UserName");
+            Response.Cookies.Delete("Access-Token");
+            Response.Redirect("Login-Callback");
         }
     }
 }

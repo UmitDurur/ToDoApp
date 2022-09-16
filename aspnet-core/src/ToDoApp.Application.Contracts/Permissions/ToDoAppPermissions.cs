@@ -10,4 +10,5 @@ public static class ToDoAppPermissions
     public const string ToDoCreation = GroupName + ".ToDoCreation";
     public const string ToDoDeletion = GroupName + ".ToDoDeletion";
     public const string GetToDo = GroupName + ".GetToDo";
+    public const string UpdateToDo = GroupName + ".UpdateToDo";
 }

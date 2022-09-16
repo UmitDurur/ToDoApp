@@ -20,5 +20,7 @@ namespace ToDoApp.ToDos
 
         Task<ToDoDto> Get(Guid id);
 
+        Task UpdateAsync(Guid id, CreateUpdateToDoDto update);
+
     }
 }

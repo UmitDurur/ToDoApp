@@ -14,6 +14,7 @@ public class ToDoAppPermissionDefinitionProvider : PermissionDefinitionProvider
         toDoGroup.AddPermission(ToDoAppPermissions.ToDoCreation);
         toDoGroup.AddPermission(ToDoAppPermissions.ToDoDeletion);
         toDoGroup.AddPermission(ToDoAppPermissions.GetToDo);
+        toDoGroup.AddPermission(ToDoAppPermissions.UpdateToDo);
     }
 
     private static LocalizableString L(string name)

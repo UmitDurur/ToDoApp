@@ -1,10 +1,12 @@
 using IdentityModel;
+using IdentityServer4.Extensions;
 using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using System.Security.Claims;
 using ToDoFrontEnd.Services;
@@ -23,56 +25,27 @@ namespace ToDoFrontEnd.Pages
         public UserDto UserCredentials { get; set; }
         public async Task OnGet()
         {
-            if (!string.IsNullOrEmpty(Request.Cookies["Access-Token"]))
-                Response.Redirect("todo",true);
-
-
+            if (!string.IsNullOrWhiteSpace(Request.Cookies["Access-Token"]))
+            {
+                Response.Redirect("todo");
+            }
         }
 
-        //Just redirect to our index after logging in. 
-        //const bool setBearerToken = true;
-
-        //var httpService = new HttpService("admin", "1q2w3E*");
-        //var httpClient = await httpService.GetHttpClientAsync(setBearerToken);
-
-        //var response = await httpClient.Value.GetAsync("https://localhost:44352/api/app/to-do/titles");
-        //response.EnsureSuccessStatusCode();
-
-
-        //var json = await response.Content.ReadAsStringAsync();
-
-        //var books = JsonConvert.DeserializeObject<ListResultDto<TitleDto>>(json);
-
-        //if (books?.Items != null)
-        //    foreach (var book in books.Items)
-        //        System.Diagnostics.Debug.WriteLine(book.Title);
 
         public async Task OnPost()
         {
-
             var authService = new AuthService();
             var tokenResponse = await authService.LoginUser(UserCredentials);
+
             CookieOptions cookieOptions = new CookieOptions();
             cookieOptions.HttpOnly = true;
             cookieOptions.Expires = DateTime.Now.AddMilliseconds(tokenResponse.ExpiresIn);
-            Response.Cookies.Append("Access-Token", tokenResponse.AccessToken,cookieOptions);
-            //Response.Cookies.Append("Refresh-Token", tokenResponse.RefreshToken);
-            System.Diagnostics.Debug.WriteLine(tokenResponse);
-            //if (!string.IsNullOrEmpty(Request.Cookies["Access-Token"]))
-            //    Response.RedirectToPage("todo");
-            RedirectToPage("todo",true);
+            cookieOptions.IsEssential = true;
 
-            //var response = await httpClient.Value.GetAsync("https://localhost:44352/api/app/to-do/titles");
-            //response.EnsureSuccessStatusCode();
+            Response.Cookies.Append("Access-Token", tokenResponse.AccessToken, cookieOptions);
+            Response.Cookies.Append("UserName", UserCredentials.Username);
 
-
-            //var json = await response.Content.ReadAsStringAsync();
-
-            //var books = JsonConvert.DeserializeObject<ListResultDto<TitleDto>>(json);
-
-            //if (books?.Items != null)
-            //    foreach (var book in books.Items)
-            //        System.Diagnostics.Debug.WriteLine(book.Title);
+            Response.Redirect("Login-Callback");
         }
     }
 }

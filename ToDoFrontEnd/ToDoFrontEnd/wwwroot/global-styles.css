@@ -1,1 +1,17 @@
 /* Your Global Styles */
+
+.Pending {
+color:red
+}
+
+.InProgress{
+    color:coral
+}
+
+.Done {
+    color:green
+}
+.FixedWidthActions {
+    flex: 0 0 100px;
+    max-width: 100px;
+}

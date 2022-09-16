@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Mvc.ViewComponents;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi.Models;
 using ToDoFrontEnd.Data;
@@ -137,6 +138,7 @@ public class ToDoFrontEndModule : AbpModule
         ConfigureLocalization();
         ConfigureAuthentication(context.Services, configuration);
         ConfigureEfCore(context);
+
     }
 
     private void ConfigureMultiTenancy()
@@ -178,9 +180,22 @@ public class ToDoFrontEndModule : AbpModule
                 options.Authority = configuration["AuthServer:Authority"];
                 options.RequireHttpsMetadata = Convert.ToBoolean(configuration["AuthServer:RequireHttpsMetadata"]);
                 options.Audience = "ToDoFrontEnd";
+                
             });
 
+        services.Configure<CookiePolicyOptions>(options =>
+        {
+            // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+            options.CheckConsentNeeded = context => true;
+            options.MinimumSameSitePolicy = SameSiteMode.None;
+        });
+
         services.ForwardIdentityAuthenticationForBearer();
+
+        services.AddControllersWithViews().AddRazorOptions(options =>
+        {
+            options.ViewLocationFormats.Add("/{0}.cshtml");
+        });
     }
 
     private void ConfigureLocalization()

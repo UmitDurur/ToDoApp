@@ -10,16 +10,16 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.ObjectMapping;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Users;
+using Volo.Abp.DependencyInjection;
 
 namespace ToDoApp.ToDos
 {
-    [Authorize]
     public class ToDoService : ToDoAppAppService, IToDoService
     {
         private readonly IRepository<ToDo, Guid> _toDoRepository;
         private readonly IRepository<ToDoTitle, Guid> _titleRepository;
         private readonly ICurrentUser _currentUser;
-        public ToDoService(IRepository<ToDo, Guid> todoRepository, IRepository<ToDoTitle, Guid> titleRepository,ICurrentUser currentUser)
+        public ToDoService(IRepository<ToDo, Guid> todoRepository, IRepository<ToDoTitle, Guid> titleRepository, ICurrentUser currentUser)
         {
             _toDoRepository = todoRepository;
             _titleRepository = titleRepository;
@@ -36,17 +36,18 @@ namespace ToDoApp.ToDos
         [Authorize("ToDoApp.ToDoDeletion")]
         public async Task DeleteAsync(Guid id)
         {
-            var toDo = await _toDoRepository.FirstOrDefaultAsync(t=>t.Id==id);
-            if(toDo!=null)
+            var toDo = await _toDoRepository.FirstOrDefaultAsync(t => t.Id == id);
+            if (toDo != null)
                 await _toDoRepository.DeleteAsync(toDo);
         }
 
+        [Authorize]
         public async Task<PagedResultDto<ToDoDto>> GetFilteredListAsync(PagedAndSortedResultRequestDto input)
         {
             var queryable = await _toDoRepository
                .WithDetailsAsync(x => x.Title);
 
-            queryable = queryable.Where(t=>t.CreatorId==_currentUser.Id)
+            queryable = queryable.Where(t => t.CreatorId == _currentUser.Id)
                 .Skip(input.SkipCount)
                 .Take(input.MaxResultCount)
                 .OrderBy(input.Sorting ?? nameof(ToDo.Description));
@@ -60,21 +61,43 @@ namespace ToDoApp.ToDos
                 ObjectMapper.Map<List<ToDo>, List<ToDoDto>>(todos)
                 );
         }
-        
-        public async Task<PagedResultDto<ToDoDto>> GetFilteredListByTitleAsync(PagedAndSortedResultByTitleRequestDto input)
-        {
-            var queryable = await _toDoRepository.WithDetailsAsync(x => x.Title);
 
-            queryable = queryable.Where(t=>
-                                    t.CreatorId==_currentUser.Id 
-                                    && t.TitleId==input.TitleId)
+        [Authorize]
+        public async Task<PagedResultDto<ToDoDto>> GetFilteredList2Async(PagedAndSortedResultRequestDto input)
+        {
+            var queryable = await _toDoRepository
+               .WithDetailsAsync(x => x.Title);
+
+            queryable = queryable
                 .Skip(input.SkipCount)
                 .Take(input.MaxResultCount)
                 .OrderBy(input.Sorting ?? nameof(ToDo.Description));
 
             var todos = await AsyncExecuter.ToListAsync(queryable);
 
-            int count = await _toDoRepository.CountAsync(t=>t.CreatorId==_currentUser.Id && t.TitleId==input.TitleId);
+            int count = await _toDoRepository.CountAsync();
+
+            return new PagedResultDto<ToDoDto>(
+                count,
+                ObjectMapper.Map<List<ToDo>, List<ToDoDto>>(todos)
+                );
+        }
+
+        [Authorize]
+        public async Task<PagedResultDto<ToDoDto>> GetFilteredListByTitleAsync(PagedAndSortedResultByTitleRequestDto input)
+        {
+            var queryable = await _toDoRepository.WithDetailsAsync(x => x.Title);
+
+            queryable = queryable.Where(t =>
+                                    t.CreatorId == _currentUser.Id
+                                    && t.TitleId == input.TitleId)
+                .Skip(input.SkipCount)
+                .Take(input.MaxResultCount)
+                .OrderBy(input.Sorting ?? nameof(ToDo.Description));
+
+            var todos = await AsyncExecuter.ToListAsync(queryable);
+
+            int count = await _toDoRepository.CountAsync(t => t.CreatorId == _currentUser.Id && t.TitleId == input.TitleId);
 
             return new PagedResultDto<ToDoDto>(
                 count,
@@ -97,7 +120,18 @@ namespace ToDoApp.ToDos
         public async Task<ToDoDto> Get(Guid id)
         {
             var item = await _toDoRepository.FirstOrDefaultAsync(t => t.Id == id);
-            return ObjectMapper.Map<ToDo,ToDoDto>(item);   
+            return ObjectMapper.Map<ToDo, ToDoDto>(item);
+        }
+
+        [Authorize("ToDoApp.UpdateToDo")]
+        public async Task UpdateAsync(Guid id, CreateUpdateToDoDto update)
+        {
+            var item = await _toDoRepository.GetAsync(id);
+            if (update.State != 0)
+                item.State = update.State;
+            if (update.Description != null)
+                item.Description = update.Description;
+            await _toDoRepository.UpdateAsync(item);
         }
     }
 }
