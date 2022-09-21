@@ -1,5 +1,6 @@
 ﻿using IdentityModel.Client;
 using IdentityServer4.Models;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using ToDoFrontEnd.Services.Dtos;
 using Volo.Abp.IdentityServer.Clients;
@@ -39,6 +40,20 @@ namespace ToDoFrontEnd.Services
         {
             var accessToken = (await GetTokensFromToDoApi(_user));
             return accessToken;
+        }
+
+        public async Task LogoutUser(string token)
+        {
+            Dictionary<string, string> query = new Dictionary<string, string>();
+                query.Add("id_token_hint", token);
+            var uri = QueryHelpers.AddQueryString("connect/endsession", query);
+
+
+            var client = new Lazy<HttpClient>(() => new HttpClient());
+            client.Value.SetBearerToken(token);
+            client.Value.BaseAddress = new Uri("https://localhost:44352/");
+            var result = await client.Value.GetAsync(uri);
+            result.EnsureSuccessStatusCode();
         }
     }
 }

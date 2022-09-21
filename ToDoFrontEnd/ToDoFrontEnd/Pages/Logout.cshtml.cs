@@ -9,6 +9,8 @@ namespace ToDoFrontEnd.Pages
     {
         public async Task OnGet()
         {
+            var authService = new AuthService();
+            await authService.LogoutUser(Request.Cookies["Access-Token"]);
             Response.Cookies.Delete("UserName");
             Response.Cookies.Delete("Access-Token");
             Response.Redirect("Login-Callback");

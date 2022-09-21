@@ -11,6 +11,7 @@ using ToDoFrontEnd.Services.Dtos;
 using Volo.Abp.Application.Dtos;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using System;
+using NUglify.JavaScript.Syntax;
 
 namespace ToDoFrontEnd.Pages
 {
@@ -20,6 +21,12 @@ namespace ToDoFrontEnd.Pages
         public List<TitleDto> Titles { get; set; } = new List<TitleDto>();
         [BindProperty]
         public string SelectedTitleId { get; set; }
+
+        private readonly HttpService _httpService;
+        public ToDoModel()
+        {
+            _httpService = new HttpService();
+        }
 
         public async Task OnGet()
         {
@@ -32,19 +39,21 @@ namespace ToDoFrontEnd.Pages
 
         public async Task<List<ToDoDto>> GetToDos(string titleId)
         {
-            var httpService = new HttpService();
-            var httpClient = await httpService.GetHttpClientAsync(Request.Cookies["Access-Token"]);
-
             Dictionary<string, string> query = new Dictionary<string, string>();
             if (!string.IsNullOrEmpty(titleId))
                 query.Add("TitleId", titleId);
-            var uri = QueryHelpers.AddQueryString("api/app/to-do/filtered-list-by-title/", query);
-            var response = await httpClient.Value.GetAsync(uri);
-            response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync();
+            var uri = QueryHelpers.AddQueryString("to-do/filtered-list-by-title/", query);
+
+            var requestDto = new HttpRequestDto
+            {
+                AccessToken = Request.Cookies["Access-Token"],
+                HttpMethod = HttpMethod.Get,
+                Uri = uri
+            };
+
+            var json = await _httpService.ExecuteAsync(requestDto);
             var result = JsonConvert.DeserializeObject<ListResultDto<ToDoDto>>(json);
             return result.Items.ToList();
-
         }
 
         public async Task OnGetOnClickTitle(string titleId)
@@ -54,67 +63,112 @@ namespace ToDoFrontEnd.Pages
 
         public async Task OnPostToDoDelete(string toDoId)
         {
-            var httpService = new HttpService();
-            var httpClient = await httpService.GetHttpClientAsync(Request.Cookies["Access-Token"]);
-            var response = await httpClient.Value.DeleteAsync("api/app/to-do/" + toDoId);
-            response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync();
+            var uri = "to-do/" + toDoId;
+
+            var requestDto = new HttpRequestDto
+            {
+                AccessToken = Request.Cookies["Access-Token"],
+                HttpMethod = HttpMethod.Delete,
+                Uri = uri
+            };
+
+            try
+            {
+                await _httpService.ExecuteAsync(requestDto);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("OnPostToDoDelete Error: " + ex.Message);
+            }
         }
 
         public async Task OnPostToDoAdd(string tododescription, string titleid)
         {
-            var httpService = new HttpService();
-            var httpClient = await httpService.GetHttpClientAsync(Request.Cookies["Access-Token"]);
-            Dictionary<string, string> query = new Dictionary<string, string>();
+
             if (!string.IsNullOrEmpty(tododescription))
+            {
+                Dictionary<string, string> query = new Dictionary<string, string>();
                 query.Add("Description", tododescription);
-            query.Add("TitleId", titleid);
+                query.Add("TitleId", titleid);
 
-            var json = JsonConvert.SerializeObject(query);
-            var data = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await httpClient.Value.PostAsync("api/app/to-do/", data);
-            try
-            {
+                var content = _httpService.CreateStringContent(query);
+                var requestDto = new HttpRequestDto
+                {
+                    AccessToken = Request.Cookies["Access-Token"],
+                    HttpMethod = HttpMethod.Post,
+                    Uri = "to-do/",
+                    StringContent = content
+                };
 
-                response.EnsureSuccessStatusCode();
-            }
-            catch (Exception ex)
-            {
-                
+                try
+                {
+                    await _httpService.ExecuteAsync(requestDto);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("OnPostToDoAdd Error: " + ex.Message);
+                }
             }
         }
 
-        public async Task OnPostToDoEdit(string toDoId,string tododescription,ToDoState edittodostate)
+        public async Task OnPostToDoEdit(string toDoId, string tododescription, ToDoState edittodostate)
         {
-            var httpService = new HttpService();
-            var httpClient = await httpService.GetHttpClientAsync(Request.Cookies["Access-Token"]);
-            Dictionary<string, string> query = new Dictionary<string, string>();
-            if (!string.IsNullOrEmpty(tododescription))
-                query.Add("Description",tododescription);
-            if (edittodostate != 0)
-                query.Add("state",((int)edittodostate).ToString());
-            var json = JsonConvert.SerializeObject(query);
-            var data = new StringContent(json, Encoding.UTF8, "application/json");
+            if (!string.IsNullOrWhiteSpace(toDoId))
+            {
+                Dictionary<string, string> query = new Dictionary<string, string>();
+                if (!string.IsNullOrEmpty(tododescription))
+                    query.Add("Description", tododescription);
+                if (edittodostate != 0)
+                    query.Add("state", ((int)edittodostate).ToString());
 
-            var response = await httpClient.Value.PutAsync("api/app/to-do/" + toDoId,data);
-            response.EnsureSuccessStatusCode();
-            var result = await response.Content.ReadAsStringAsync();
+                var content = _httpService.CreateStringContent(query);
+
+                var uri = "to-do/" + toDoId;
+
+                var request = new HttpRequestDto
+                {
+                    AccessToken = Request.Cookies["Access-Token"],
+                    HttpMethod = HttpMethod.Put,
+                    Uri = uri,
+                    StringContent = content
+                };
+                try
+                {
+                    await _httpService.ExecuteAsync(request);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("OnPostToDoEdit Error: " + ex.Message);
+                }
+            }
         }
 
 
 
         public async Task<List<TitleDto>> GetTitles()
         {
-            var httpService = new HttpService();
-            var httpClient = await httpService.GetHttpClientAsync(Request.Cookies["Access-Token"]);
-            var response = await httpClient.Value.GetAsync("api/app/to-do/titles");
-            response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<ListResultDto<TitleDto>>(json);
-            if (result?.Items != null)
-                Titles = result.Items.ToList();
-            if (SelectedTitleId == null)
-                SelectedTitleId = Titles.FirstOrDefault().Id.ToString();
+            var request = new HttpRequestDto
+            {
+                AccessToken = Request.Cookies["Access-Token"],
+                HttpMethod = HttpMethod.Get,
+                Uri = "to-do/titles"
+            };
+
+
+            try
+            {
+                var json = await _httpService.ExecuteAsync(request);
+                var result = JsonConvert.DeserializeObject<ListResultDto<TitleDto>>(json);
+                if (result?.Items != null)
+                    Titles = result.Items.ToList();
+                if (SelectedTitleId == null)
+                    SelectedTitleId = Titles.FirstOrDefault().Id.ToString();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("GetTitles Error: "+ ex.Message);
+            }
+
             return Titles;
         }
         public string GetUsername()
